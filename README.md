@@ -1,8 +1,6 @@
 
 
-This fork by Kevin Branch makes several changes to ossec_client.py.
-
-Changes include:
+This fork by Kevin Branch makes several changes to ossec_client.py:
 
 * Overwrites ossec.conf instead of appends to it, and uses newlines.  
 * It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
