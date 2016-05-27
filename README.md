@@ -4,14 +4,13 @@ This fork by Kevin Branch makes several changes to ossec_client.py.
 
 Changes include:
 
-  Overwrites ossec.conf instead of appends to it, and uses newlines.  
-  It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
-  Takes an optional second parameter to identify <config-profile>.  It defaults to 'generic'
-  Handles stop/start of Linux service even when named "ossec-hids-agent" (like with the Wazuh rpm) rather than the stock name "ossec"
+* Overwrites ossec.conf instead of appends to it, and uses newlines.  
+* It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
+* Takes an optional second parameter to identify <config-profile>.  It defaults to 'generic'
+* Handles stop/start of Linux service even when named "ossec-hids-agent" (like with the Wazuh rpm) rather than the stock name "ossec"
 
- Still to be addressed:
-  Agent ID number collisions during parallel mass deployments 
-  (https://github.com/BinaryDefense/auto-ossec/issues/3)
+Still to be addressed:
+* Agent ID number collisions during parallel mass deployments  (https://github.com/BinaryDefense/auto-ossec/issues/3)
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
