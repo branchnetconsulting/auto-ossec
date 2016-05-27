@@ -1,8 +1,14 @@
 #!/usr/bin/python
 #
-# This is the initial release of the ossec_client.py which can be byte compiled into an exe. This will
-# connect to the ossec_auto.py daemon that will automatically issue a key in order to pair the OSSEC
-# HIDS. 
+# This is a fork by Kevin Branch of BinaryDefense's ossec_client.py.
+#
+# Changes include:
+# 	Overwrites ossec.conf instead of appends to it, and uses newlines
+#	Takes optional second parameter to identify <config-profile> - defaults to 'generic'
+#	Handles stop/start of Linux service even when named ossec-hids-agent(like Wazuh rpm)
+#	Uses a different default secret key which must match the secret in auto_server.py
+#
+# This will connect to the ossec_auto.py daemon that will automatically issue a key in order to pair the OSSEC HIDS. 
 #
 # Also works with AlienVault.
 #
@@ -60,6 +66,12 @@ Usage: auto_ossec.exe <server_ip>
 		""")
 	sys.exit()
 
+try: 
+	oprofile = sys.argv[2]
+
+except IndexError:
+	oprofile = "generic"
+
 def aescall(secret, data, format):
 
 	# padding and block size
@@ -78,12 +90,12 @@ def aescall(secret, data, format):
 	cipher = AES.new(secret)
 	
 	if format == "encrypt":
-                aes = EncodeAES(cipher, data)
-                return str(aes)
+		aes = EncodeAES(cipher, data)
+		return str(aes)
 
 	if format == "decrypt":
-                aes = DecodeAES(cipher, data)
-                return str(aes)
+		aes = DecodeAES(cipher, data)
+		return str(aes)
 
 # this will grab the hostname and ip address and return it
 def grab_info():
@@ -95,7 +107,7 @@ def grab_info():
                 sys.exit()
 try:
         # secret key - if you change this you must change on ossec_auto server - would recommend this is the default published to git
-        secret = "(3j+-sa!333hNA2u3h@*!~h~2&^lk<!B"
+        secret = ""
         # port for daemon
         port = 9654 
         # general length size of socket
@@ -159,41 +171,44 @@ try:
                 subprocess.Popen('net stop "OSSEC HIDS"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
         if installer == "Linux":
-                subprocess.Popen("service ossec stop", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
+                if os.path.isfile("/etc/init.d/ossec"):
+                         subprocess.Popen("service ossec stop", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
+                if os.path.isfile("/etc/init.d/ossec-hids-agent"):
+                         subprocess.Popen("service ossec-hids-agent stop", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
         print ("[*] Modifying ossec.conf to incorporate server host IP address.")
         # make sure we modify the ossec.conf
 
         if installer == "Windows":
-                data = file(path + "\\ossec.conf", "r").read()
-                if not "<server-ip>%s</server-ip>" % (host) in data:
-                        filewrite = file(path + "\\ossec.conf", "a")
-                        filewrite.write("\n")
-                        filewrite.write(" <ossec_config>")
-                        filewrite.write("   <client>")
-                        filewrite.write("      <server-ip>%s</server-ip>" % (host))
-                        filewrite.write("   </client>")
-                        filewrite.write(" </ossec_config>")
-                        filewrite.close()
+                filewrite = file(path + "\\ossec.conf", "w")
+                filewrite.write(" <ossec_config>\n")
+                filewrite.write("   <client>\n")
+                filewrite.write("      <server-ip>%s</server-ip>\n" % (host))
+                filewrite.write("      <config-profile>%s</config-profile>\n" % (oprofile))
+                filewrite.write("   </client>\n")
+                filewrite.write(" </ossec_config>\n")
+                filewrite.close()
 
         if installer == "Linux":
-                data = file(path + "etc/ossec.conf", "r").read()
-                if not "<server-ip>%s</server-ip>" % (host) in data:
-                        filewrite = file(path + "etc/ossec.conf", "a")
-                        filewrite.write("\n")
-                        filewrite.write(" <ossec_config>")
-                        filewrite.write("   <client>")
-                        filewrite.write("    <server-ip>%s</server-ip>" % (host))
-                        filewrite.write("   </client>")
-                        filewrite.write(" </ossec_config>")
-                        filewrite.close()
+                filewrite = file(path + "etc/ossec.conf", "w")
+                filewrite.write(" <ossec_config>\n")
+                filewrite.write("   <client>\n")
+                filewrite.write("    <server-ip>%s</server-ip>\n" % (host))
+                filewrite.write("    <config-profile>%s</config-profile>\n" % (oprofile))
+                filewrite.write("   </client>\n")
+                filewrite.write(" </ossec_config>\n")
+                filewrite.close()
+
 
         # start the service
         if installer == "Windows":
                 subprocess.Popen('net start "OSSEC HIDS"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait() 
 
         if installer == "Linux":
-                subprocess.Popen("service ossec start", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
+                if os.path.isfile("/etc/init.d/ossec"):
+                         subprocess.Popen("service ossec start", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
+                if os.path.isfile("/etc/init.d/ossec-hids-agent"):
+                         subprocess.Popen("service ossec-hids-agent start", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
         print ("[*] Finished. Started the OSSEC service. Auto Enrollment for OSSEC is now finished.")
 
