@@ -1,5 +1,3 @@
-
-
 This fork by Kevin Branch makes several changes to ossec_client.py:
 
 * Overwrites ossec.conf instead of appends to it, and uses newlines.  
@@ -10,6 +8,7 @@ This fork by Kevin Branch makes several changes to ossec_client.py:
 Still to be addressed:
 * Agent ID number collisions during parallel mass deployments  (https://github.com/BinaryDefense/auto-ossec/issues/3)
 
+From original README:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Binary Defense Systems Auto-Enroll for OSSEC
