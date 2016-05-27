@@ -3,10 +3,10 @@
 # This is a fork by Kevin Branch of BinaryDefense's ossec_client.py.
 #
 # Changes include:
-# 	Overwrites ossec.conf instead of appends to it, and uses newlines
-#	Takes optional second parameter to identify <config-profile> - defaults to 'generic'
+# 	Overwrites ossec.conf instead of appends to it, and uses newlines.  
+#	It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
+#	Takes an optional second parameter to identify <config-profile>.  It defaults to 'generic'
 #	Handles stop/start of Linux service even when named ossec-hids-agent(like Wazuh rpm)
-#	Uses a different default secret key which must match the secret in auto_server.py
 #
 # This will connect to the ossec_auto.py daemon that will automatically issue a key in order to pair the OSSEC HIDS. 
 #
@@ -107,7 +107,7 @@ def grab_info():
                 sys.exit()
 try:
         # secret key - if you change this you must change on ossec_auto server - would recommend this is the default published to git
-        secret = ""
+        secret = "(3j+-sa!333hNA2u3h@*!~h~2&^lk<!B"
         # port for daemon
         port = 9654 
         # general length size of socket
