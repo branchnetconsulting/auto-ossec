@@ -11,6 +11,9 @@
 #	Uses a different default secret key which must match the secret in auto_server.py
 #	Validates reply from server instead of assuming a key was received
 #
+# Use this script in conjunction with the forked auto_server.py.  Messaging between the client and server script has been adapted
+# to support queuing of registration requests to avoid a known problem in the original auto-ossec 1.2 package.
+#
 # This will connect to the ossec_auto.py daemon that will automatically issue a key in
 # order to pair the OSSEC HIDS. 
 #
