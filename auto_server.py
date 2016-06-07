@@ -1,5 +1,11 @@
 #!/usr/bin/python
 #
+# auto_server-bnc-1.3
+#
+# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_server.py script.  
+# It has been updated to queue incoming registration requests so that parallel calls to /var/ossec/bin/manage_agents are not made.
+# This resolves a known problem wherein many simultaneous registration requests cause agent ID collisions.
+#
 # This is the ossec auto enrollment server daemon. This should be put under supervisor to ensure health and stability.
 #
 #
@@ -10,7 +16,7 @@
 import SocketServer
 from threading import Thread
 import subprocess
-import sys
+import syss
 
 # check python crypto library
 try:
@@ -119,11 +125,37 @@ class service(SocketServer.BaseRequestHandler):
 					data = aescall(secret, data, "decrypt")
 
 					# if this section clears -we know that it is a legit request, has been decrypted and we're ready to rock
-					if "BDSOSSEC" in data: 
+					if "BNCOSSEC" in data: 
+
+						# Delete any entries in queue more than 1 hour old.  Those would be stale entries.
+						os.popen("find /tmp/auto-ossec-queue/ -cmin +60 -exec rm -f {} \; ;")
+						# Create client token for a name in the queue.  Just use IP address for now.  
+						ctoken = self.client_address[0]
+						# Put client in queue
+						os.popen("touch /tmp/auto-ossec-queue/"+ctoken)
+						# Must be in the queue directory to find the oldest file
+						os.chdir("/tmp/auto-ossec-queue" )
+						
+						timer = 0
+						while 1:
+							# find oldest client in queue (first in line)
+							oldest=min(os.listdir('/tmp/auto-ossec-queue'), key = os.path.getctime)
+							# print "This client is:   "+ctoken
+							# print "First in line is: "+oldest
+							# If our client is first in line then proceed to service them
+							if ctoken == oldest:
+								break
+							# Otherwise wait a little bit, sending the "WAIT" message to the client every 5 seconds to ensure them they are in queue
+							timer += 1
+							if timer == 25:
+								print "Sending WAIT message to "+ctoken
+								self.request.send(aescall(secret, "WAIT", "encrypt"))
+								timer = 0
+							time.sleep(.2)
 
 						# write a lock file to check later on with our threaded process to restart OSSEC if needed every 10 minutes - if lock file is present then it will trigger a restart of OSSEC server
-						if not os.path.isfile("lock"): 
-							filewrite = file("lock", "w")
+						if not os.path.isfile("/tmp/aolock"): 
+							filewrite = file("/tmp/aolock", "w")
 							filewrite.write("lock")
 							filewrite.close()
 
@@ -137,6 +169,19 @@ class service(SocketServer.BaseRequestHandler):
 						# here if the hostname was already used, we need to remove it and call it again
 						data = parse_client(hostname, ipaddr)
 						if data == 0: data = parse_client(hostname, ipaddr)
+
+
+
+
+						# PAUSE FOR TESTING QUEUEING
+						# time.sleep(5)
+
+
+
+
+						# Remove client from queue
+						os.popen("rm -f /tmp/auto-ossec-queue/"+ctoken)
+
 						print "[*] Provisioned new key for hostname: %s with IP of: %s" % (hostname, ipaddr)
 						data = aescall(secret, data, "encrypt")
 						print "[*] Sending new key to %s: " % (ipaddr) + data
@@ -162,6 +207,10 @@ def ossec_monitor():
 		subprocess.Popen("service ossec restart", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer): pass
+
+
+# Upon auto-ossec server initialization, clear out the queue since anything there would be stale
+os.popen("rm -f /tmp/auto-ossec-queue/*")
 
 print "[*] The auto enrollment OSSEC Server is now listening on 9654" 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
