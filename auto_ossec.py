@@ -118,7 +118,7 @@ try:
         # general length size of socket
         size = 1024 
 
-        print ("[*] auto_ossec - OSSEC agent mass deployment script")
+        print ("[*] auto_ossec - OSSEC agent mass deployment tool")
         print ("[*] Branch Network Consulting fork, version 1.2")
 
         # loop through in case server isnt reachable
