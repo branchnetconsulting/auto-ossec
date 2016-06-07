@@ -6,6 +6,9 @@
 # It has been updated to queue incoming registration requests so that parallel calls to /var/ossec/bin/manage_agents are not made.
 # This resolves a known problem wherein many simultaneous registration requests cause agent ID collisions.
 #
+# Use this script in conjunction with the forked auto_ossec.py script.  Messaging between the client and server script has been adapted
+# to support queuing of registration requests to resolve the agent id collision problem.
+#
 # This is the ossec auto enrollment server daemon. This should be put under supervisor to ensure health and stability.
 #
 #
@@ -160,7 +163,7 @@ class service(SocketServer.BaseRequestHandler):
 							filewrite.close()
 
 						# strip identifier
-						data = data.replace("BDSOSSEC", "")
+						data = data.replace("BNCOSSEC", "")
 						hostname = data
 
 						# pull the true IP, not the NATed one if they are using VMWare
@@ -211,6 +214,9 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer): pa
 
 # Upon auto-ossec server initialization, clear out the queue since anything there would be stale
 os.popen("rm -f /tmp/auto-ossec-queue/*")
+
+print ("[*] auto_ossec - OSSEC agent mass deployment server-side tool")
+print ("[*] Branch Network Consulting fork, version 1.3")
 
 print "[*] The auto enrollment OSSEC Server is now listening on 9654" 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
