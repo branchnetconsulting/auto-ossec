@@ -5,14 +5,16 @@ Version 1.3
 Supported Systems: Linux, Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This fork makes several changes to ossec_client.py and ossec_server.py:
+This fork makes several changes to auto_ossec.py and ossec_server.py:
 
-* Overwrites ossec.conf instead of appends to it, and uses newlines.  
-* It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
-* Takes an optional second parameter to identify <config-profile>.  It defaults to 'generic'
-* Handles stop/start of Linux service even when named "ossec-hids-agent" (like with the Wazuh rpm) rather than the stock name "ossec"
-* Queues incoming auto_ossec registration requests to resolve problem of agent ID number collisions during parallel mass deployments
+* It generates a new ossec.conf on the agent instead of appending to the existing ossec.conf file.
+* It assumes all agent settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
+* It accepts an optional second parameter to specify a config-profile value.  It defaults to config-profile 'generic'.
+* It stops and starts the OSSEC agent Linux service even when named "ossec-hids-agent" (like with the Wazuh rpm) rather than the stock service name "ossec"
+* It queues incoming auto_ossec registration requests to resolve the problem of agent ID number collisions during parallel mass deployments
 *   (https://github.com/BinaryDefense/auto-ossec/issues/3)
+
+It is important to use both the forked ossec_client.py and ossec_server.py because client-server messaging has been adapted to support request queuing.
 
 
 From original README:
