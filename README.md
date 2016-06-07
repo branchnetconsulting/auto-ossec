@@ -1,3 +1,10 @@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Branch Network Consulting fork of Auto-Enroll for OSSEC
+Extended by: Kevin Branch (BNC)
+Version 1.3
+Supported Systems: Linux, Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This fork by Kevin Branch makes several changes to ossec_client.py and ossec_server.py:
 
 * Overwrites ossec.conf instead of appends to it, and uses newlines.  
@@ -6,13 +13,6 @@ This fork by Kevin Branch makes several changes to ossec_client.py and ossec_ser
 * Handles stop/start of Linux service even when named "ossec-hids-agent" (like with the Wazuh rpm) rather than the stock name "ossec"
 * Queues incoming auto_ossec registration requests to resolve problem of agent ID number collisions during parallel mass deployments
 *   (https://github.com/BinaryDefense/auto-ossec/issues/3)
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Branch Network Consulting fork of Auto-Enroll for OSSEC
-Extended by: Kevin Branch (BNC)
-Version 1.3
-Supported Systems: Linux, Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 From original README:
