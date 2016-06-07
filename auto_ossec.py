@@ -1,14 +1,18 @@
 #!/usr/bin/python
 #
+# auto_ossec-bnc-1.2
+#
 # This is a fork by Kevin Branch of BinaryDefense's ossec_client.py.
 #
 # Changes include:
-# 	Overwrites ossec.conf instead of appends to it, and uses newlines.  
-#	It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
-#	Takes an optional second parameter to identify <config-profile>.  It defaults to 'generic'
+# 	Overwrites ossec.conf instead of appends to it, and uses newlines
+#	Takes optional second parameter to identify <config-profile> - defaults to 'generic'
 #	Handles stop/start of Linux service even when named ossec-hids-agent(like Wazuh rpm)
+#	Uses a different default secret key which must match the secret in auto_server.py
+#	Validates reply from server instead of assuming a key was received
 #
-# This will connect to the ossec_auto.py daemon that will automatically issue a key in order to pair the OSSEC HIDS. 
+# This will connect to the ossec_auto.py daemon that will automatically issue a key in
+# order to pair the OSSEC HIDS. 
 #
 # Also works with AlienVault.
 #
@@ -23,6 +27,7 @@ import sys
 import os
 import subprocess
 import time
+import re
 
 # try to import python-crypto
 try:
@@ -60,7 +65,7 @@ auto_ossec.exe to the OSSEC server that is
 listening. Note that default port is 9654
 but this can be changed in the source.  
 
-Usage: auto_ossec.exe <server_ip>
+Usage: auto_ossec.exe <server_ip> <optional_config_profile_name>
 
 *****************************************************
 		""")
@@ -90,12 +95,12 @@ def aescall(secret, data, format):
 	cipher = AES.new(secret)
 	
 	if format == "encrypt":
-		aes = EncodeAES(cipher, data)
-		return str(aes)
+                aes = EncodeAES(cipher, data)
+                return str(aes)
 
 	if format == "decrypt":
-		aes = DecodeAES(cipher, data)
-		return str(aes)
+                aes = DecodeAES(cipher, data)
+                return str(aes)
 
 # this will grab the hostname and ip address and return it
 def grab_info():
@@ -106,12 +111,15 @@ def grab_info():
         except Exception:
                 sys.exit()
 try:
-        # secret key - if you change this you must change on ossec_auto server - would recommend this is the default published to git
+        # secret key - this must match the secret key in auto_server.py on the OSSEC server - would recommend changing it from the default published to git
         secret = "(3j+-sa!333hNA2u3h@*!~h~2&^lk<!B"
         # port for daemon
         port = 9654 
         # general length size of socket
         size = 1024 
+
+        print ("[*] auto_ossec - OSSEC agent mass deployment script")
+        print ("[*] Branch Network Consulting fork, version 1.2")
 
         # loop through in case server isnt reachable
         while 1:
@@ -126,21 +134,40 @@ try:
                         pass 
 
         print ("[*] Connected to auto enrollment server at IP: " + host)
+
         # grab host info needed for ossec
         data = grab_info()
-	
+
         # encrypt the data
         data = "BDSOSSEC" + data.rstrip()
         data = aescall(secret, data, "encrypt")
         print ("[*] Pulled hostname and IP, encrypted data, and now sending to server.")
         s.send(data) 
-        data = s.recv(size) 
-        # this is our ossec key
-        print ("[*] We received our new pairing key for OSSEC, closing server connection.")
-        data = aescall(secret, data, "decrypt")
-        # close socket
-        s.close()
-	
+
+
+
+
+	while 1:
+        	data = s.recv(size) 
+	        data = aescall(secret, data, "decrypt")
+
+	        if re.search("^[A-Za-z0-9]{100,}=?$",data):
+	        	print ("[*] We received our new pairing key for OSSEC, closing server connection.")
+	        	s.close()
+			break
+
+		elif data == "WAIT":
+			print "The server is busy registering other agents.  Your registration request is in queue..."
+		else:	
+			print "Invalid or empty message received from server (wrong secret?).  Aborting..."
+			print data
+	        	s.close()
+			sys.exit()
+
+
+
+
+
         # path variables for OSSEC
         if os.path.isdir("C:\\Program Files (x86)\\ossec-agent"): path = "C:\\Program Files (x86)\\ossec-agent"
         if os.path.isdir("C:\\Program Files\\ossec-agent"): path = "C:\\Program Files\\ossec-agent"
@@ -176,7 +203,7 @@ try:
                 if os.path.isfile("/etc/init.d/ossec-hids-agent"):
                          subprocess.Popen("service ossec-hids-agent stop", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
-        print ("[*] Modifying ossec.conf to incorporate server host IP address.")
+        print ("[*] Creating a new ossec.conf to incorporate server host IP address and optional config-profile.")
         # make sure we modify the ossec.conf
 
         if installer == "Windows":
@@ -194,11 +221,10 @@ try:
                 filewrite.write(" <ossec_config>\n")
                 filewrite.write("   <client>\n")
                 filewrite.write("    <server-ip>%s</server-ip>\n" % (host))
-                filewrite.write("    <config-profile>%s</config-profile>\n" % (oprofile))
+                filewrite.write("      <config-profile>%s</config-profile>\n" % (oprofile))
                 filewrite.write("   </client>\n")
                 filewrite.write(" </ossec_config>\n")
                 filewrite.close()
-
 
         # start the service
         if installer == "Windows":
@@ -214,4 +240,13 @@ try:
 
 except Exception as error:
         print ("[*] Something did not complete. Does this system have Internet access?")
+
+
+
+	tb = sys.exc_info()[2]
+	print tb.tb_lineno
+
+
+
         print (error)
+
