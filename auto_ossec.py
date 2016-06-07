@@ -2,7 +2,7 @@
 #
 # auto_ossec-bnc-1.3
 #
-# This is a fork by Kevin Branch of BinaryDefense's ossec_client.py.
+# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's ossec_client.py.
 #
 # Changes include:
 # 	Overwrites ossec.conf instead of appends to it, and uses newlines
