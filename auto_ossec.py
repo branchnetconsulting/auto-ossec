@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# auto_ossec-bnc-1.2
+# auto_ossec-bnc-1.3
 #
 # This is a fork by Kevin Branch of BinaryDefense's ossec_client.py.
 #
@@ -119,7 +119,7 @@ try:
         size = 1024 
 
         print ("[*] auto_ossec - OSSEC agent mass deployment tool")
-        print ("[*] Branch Network Consulting fork, version 1.2")
+        print ("[*] Branch Network Consulting fork, version 1.3")
 
         # loop through in case server isnt reachable
         while 1:
