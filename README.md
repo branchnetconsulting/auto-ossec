@@ -5,7 +5,7 @@ Version 1.3
 Supported Systems: Linux, Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This fork by Kevin Branch makes several changes to ossec_client.py and ossec_server.py:
+This fork makes several changes to ossec_client.py and ossec_server.py:
 
 * Overwrites ossec.conf instead of appends to it, and uses newlines.  
 * It assumes all settings other than <server-ip> and <config-profile> will be pulled down from the OSSEC server (agent.conf)
