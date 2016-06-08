@@ -1,7 +1,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Branch Network Consulting fork of Auto-Enroll for OSSEC
 Extended by: Kevin Branch (BNC)
-Version 1.3
+Version 1.4
 Supported Systems: Linux, Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
