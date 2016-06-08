@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-# auto_ossec-bnc-1.3
+# auto_ossec.py - BNC fork - version 1.4
 #
-# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's ossec_client.py.
+# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_ossec.py.
 #
 # Changes include:
 # 	Overwrites ossec.conf instead of appends to it, and uses newlines
@@ -14,18 +14,16 @@
 # Use this script in conjunction with the forked auto_server.py.  Messaging between the client and server script has been adapted
 # to support queuing of registration requests to avoid a known problem in the original auto-ossec 1.2 package.
 #
-# This will connect to the ossec_auto.py daemon that will automatically issue a key in
+# This will connect to the auto_server.py daemon that will automatically issue a key in
 # order to pair the OSSEC HIDS. 
 #
-# Also works with AlienVault.
-#
-# NOTE that you NEED to change the host = '' to the appropriate IP address of the OSSEC server and
-# where the ossec_auto.py daemon is running.
+# This forked version should still work with AlienVault, but it has not been tested.
 #
 
 import platform
 import base64
 import socket
+import glob
 import sys
 import os
 import subprocess
@@ -61,14 +59,19 @@ try:
 except IndexError:
 	print ("""
 ******************************************************
-Binary Defense Systems OSSEC Auto Enrollment
+Binary Defense Systems OSSEC Auto Enrollment, version 1.4
+(forked version by Branch Network Consulting)
 
 In order for this to work, you need to point
 auto_ossec.exe to the OSSEC server that is
 listening. Note that default port is 9654
 but this can be changed in the source.  
 
-Usage: auto_ossec.exe <server_ip> <optional_config_profile_name>
+You may also specify one or more config-profile names (csv, no spaces)
+as a second parameter to be referenced by agent.conf on the OSSEC server.
+
+Usage: auto_ossec.exe <server_ip> <optional_config_profile_name(s)>
+like: auto_ossec.exe 1.2.3.4 webserver,debian
 
 *****************************************************
 		""")
@@ -114,15 +117,16 @@ def grab_info():
         except Exception:
                 sys.exit()
 try:
-        # secret key - this must match the secret key in auto_server.py on the OSSEC server - would recommend changing it from the default published to git
-        secret = "(3j+-sa!333hNA2u3h@*!~h~2&^lk<!B"
+        # Secret key - change this to something unique for your organization.  Keep the number of characters the same.
+	# Make sure to also change the secret key in auto_server.py on the OSSEC server to the same value.
+	secret = "ABABABABABABABABABABABABABABABAB"
         # port for daemon
         port = 9654 
         # general length size of socket
         size = 1024 
 
-        print ("[*] auto_ossec - OSSEC agent mass deployment tool")
-        print ("[*] Branch Network Consulting fork, version 1.3")
+        print ("[*] auto_ossec - OSSEC agent mass deployment script")
+        print ("[*] Branch Network Consulting fork, version 1.4")
 
         # loop through in case server isnt reachable
         while 1:
@@ -147,9 +151,7 @@ try:
         print ("[*] Pulled hostname and IP, encrypted data, and now sending to server.")
         s.send(data) 
 
-
-
-
+	# Handle incoming messages from the registration server until key is issued
 	while 1:
         	data = s.recv(size) 
 	        data = aescall(secret, data, "decrypt")
@@ -160,16 +162,12 @@ try:
 			break
 
 		elif data == "WAIT":
-			print "The server is busy registering other agents.  Your registration request is in queue..."
+			print "[*] The server is busy registering other agents.  Your registration request is in queue..."
 		else:	
-			print "Invalid or empty message received from server (wrong secret?).  Aborting..."
+			print "[!] Invalid or empty message received from server (wrong secret?).  Aborting..."
 			print data
 	        	s.close()
 			sys.exit()
-
-
-
-
 
         # path variables for OSSEC
         if os.path.isdir("C:\\Program Files (x86)\\ossec-agent"): path = "C:\\Program Files (x86)\\ossec-agent"
@@ -218,6 +216,7 @@ try:
                 filewrite.write("   </client>\n")
                 filewrite.write(" </ossec_config>\n")
                 filewrite.close()
+		ridslist = glob.glob("c:\\Program Files (x86)\\ossec-agent\\rids\\*")
 
         if installer == "Linux":
                 filewrite = file(path + "etc/ossec.conf", "w")
@@ -228,11 +227,14 @@ try:
                 filewrite.write("   </client>\n")
                 filewrite.write(" </ossec_config>\n")
                 filewrite.close()
+		ridslist = glob.glob("/var/ossec/etc/rids/*")
+
+	# If any rids files exist from a previous registration, delete them to avoid out of sync rids problems
+	for f in ridslist: os.remove(f)
 
         # start the service
         if installer == "Windows":
                 subprocess.Popen('net start "OSSEC HIDS"', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait() 
-
         if installer == "Linux":
                 if os.path.isfile("/etc/init.d/ossec"):
                          subprocess.Popen("service ossec start", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
@@ -243,13 +245,6 @@ try:
 
 except Exception as error:
         print ("[*] Something did not complete. Does this system have Internet access?")
-
-
-
 	tb = sys.exc_info()[2]
 	print tb.tb_lineno
-
-
-
         print (error)
-
