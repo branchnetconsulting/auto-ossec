@@ -154,7 +154,7 @@ try:
         	data = s.recv(size) 
 	        data = aescall(secret, data, "decrypt")
 
-	        if re.search("^[A-Za-z0-9]{100,}=?$",data):
+	        if re.search("^[A-Za-z0-9]{100,}=?=?$",data):
 	        	print ("[*] We received our new pairing key for OSSEC, closing server connection.")
 	        	s.close()
 			break
