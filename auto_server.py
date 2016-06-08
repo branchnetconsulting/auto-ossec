@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# auto_server-bnc-1.3
+# auto_server.py - BNC fork - version 1.4
 #
 # This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_server.py script.  
 # It has been updated to queue incoming registration requests so that parallel calls to /var/ossec/bin/manage_agents are not made.
@@ -19,14 +19,15 @@
 import SocketServer
 from threading import Thread
 import subprocess
-import syss
+import sys
+import time
 
 # check python crypto library
 try:
 	from Crypto.Cipher import AES
 
 except ImportError:
-	print "[!] python-crypto not installed. Run 'apt-get install python-pycrypto pexpect' to fix."
+	print "[!] python-crypto not installed. Install python-crypto to fix."
 	sys.exit()
 
 import base64
@@ -36,7 +37,7 @@ import thread
 try:
 	import pexpect
 except ImportError:
-	print "[!] pexpect not installed. Run apt-get install pexpect to fix."
+	print "[!] pexpect not installed. Install pexpect (Redhat/CentOS) or python-pexpect (Debian/Ubuntu) to fix."
 	sys.exit()
 
 import time
@@ -119,8 +120,8 @@ class service(SocketServer.BaseRequestHandler):
         	            return str(aes)
 
 		# recommend changing this - if you do, change auto_ossec.py as well - - would recommend this is the default published to git
-		secret = "(3j+-sa!333hNA2u3h@*!~h~2&^lk<!B"
-        	print "Client connected with ", self.client_address
+		secret = "!9j&-sa!242hNA2u3h@*!~h~2&^lw<!Z"
+        	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client connected with ", self.client_address
 		try:	
 			data = self.request.recv(1024)
 		 	if data != "":
@@ -131,7 +132,7 @@ class service(SocketServer.BaseRequestHandler):
 					if "BNCOSSEC" in data: 
 
 						# Delete any entries in queue more than 1 hour old.  Those would be stale entries.
-						os.popen("find /tmp/auto-ossec-queue/ -cmin +60 -exec rm -f {} \; ;")
+						os.popen("find /tmp/auto-ossec-queue/ -type f -cmin +60 -exec rm -f {} \; ;")
 						# Create client token for a name in the queue.  Just use IP address for now.  
 						ctoken = self.client_address[0]
 						# Put client in queue
@@ -151,7 +152,7 @@ class service(SocketServer.BaseRequestHandler):
 							# Otherwise wait a little bit, sending the "WAIT" message to the client every 5 seconds to ensure them they are in queue
 							timer += 1
 							if timer == 25:
-								print "Sending WAIT message to "+ctoken
+								print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Sending WAIT message to "+ctoken
 								self.request.send(aescall(secret, "WAIT", "encrypt"))
 								timer = 0
 							time.sleep(.2)
@@ -173,21 +174,11 @@ class service(SocketServer.BaseRequestHandler):
 						data = parse_client(hostname, ipaddr)
 						if data == 0: data = parse_client(hostname, ipaddr)
 
-
-
-
-						# PAUSE FOR TESTING QUEUEING
-						# time.sleep(5)
-
-
-
-
 						# Remove client from queue
 						os.popen("rm -f /tmp/auto-ossec-queue/"+ctoken)
 
-						print "[*] Provisioned new key for hostname: %s with IP of: %s" % (hostname, ipaddr)
+						print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Sending newly provisioned key: " + data.decode('base64')
 						data = aescall(secret, data, "encrypt")
-						print "[*] Sending new key to %s: " % (ipaddr) + data
 			                        self.request.send(data)
 
 				except Exception, e:
@@ -198,7 +189,7 @@ class service(SocketServer.BaseRequestHandler):
 			print e
 			pass
 
-        	print "Pairing complete. Terminating connection to client."
+        	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Pairing complete. Terminating connection to client."
        		self.request.close()
 
 # this waits 5 minutes to check if new ossec agents have been deployed, if so it restarts the server
@@ -206,7 +197,7 @@ def ossec_monitor():
 	time.sleep(300)
 	if os.path.isfile("lock"):
 		os.remove("lock")
-		print "[*] New OSSEC agent added - triggering restart of service to add.."
+		print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" New OSSEC agent added - triggering restart of service to add.."
 		subprocess.Popen("service ossec restart", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer): pass
@@ -215,14 +206,14 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer): pa
 # Upon auto-ossec server initialization, clear out the queue since anything there would be stale
 os.popen("rm -f /tmp/auto-ossec-queue/*")
 
-print ("[*] auto_ossec - OSSEC agent mass deployment server-side tool")
-print ("[*] Branch Network Consulting fork, version 1.3")
+print ("\n[*] auto_ossec - OSSEC agent mass deployment server-side tool")
+print ("[*] Branch Network Consulting fork, version 1.4")
 
-print "[*] The auto enrollment OSSEC Server is now listening on 9654" 
+print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" The auto enrollment OSSEC Server is now listening on 9654" 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # set is so that when we cancel out we can reuse port
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-# bind to all interfaces on port 10900
+# bind to all interfaces on port 9654
 t = ThreadedTCPServer(('',9654), service)
 # start the server and listen forever
 try:
@@ -232,4 +223,4 @@ try:
 	t.serve_forever()
 
 except KeyboardInterrupt:
-	print "[*] Exiting the automatic enrollment OSSEC daemon"
+	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Exiting the automatic enrollment OSSEC daemon"
