@@ -120,7 +120,7 @@ class service(SocketServer.BaseRequestHandler):
         	            return str(aes)
 
 		# recommend changing this - if you do, change auto_ossec.py as well - - would recommend this is the default published to git
-		secret = "!9j&-sa!242hNA2u3h@*!~h~2&^lw<!Z"
+		secret = "ABABABABABABABABABABABABABABABAB"
         	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client connected with ", self.client_address
 		try:	
 			data = self.request.recv(1024)
