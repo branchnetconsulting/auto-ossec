@@ -181,6 +181,9 @@ class service(SocketServer.BaseRequestHandler):
 						data = aescall(secret, data, "encrypt")
 			                        self.request.send(data)
 
+					else:
+						print  "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client at "+str(self.client_address)+" submitted an invalid message.  Perhaps it used the wrong secret."
+
 				except Exception, e:
 					print e
 					pass
@@ -189,7 +192,7 @@ class service(SocketServer.BaseRequestHandler):
 			print e
 			pass
 
-        	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Pairing complete. Terminating connection to client."
+        	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Terminating connection to client: "+str(self.client_address)
        		self.request.close()
 
 # this waits 5 minutes to check if new ossec agents have been deployed, if so it restarts the server
