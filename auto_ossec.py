@@ -2,18 +2,6 @@
 #
 # auto_ossec.py - BNC fork - version 1.5
 #
-# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_ossec.py.
-#
-# Changes include:
-# 	Overwrites ossec.conf instead of appends to it, and uses newlines
-#	Takes optional second parameter to identify <config-profile> - defaults to 'generic'
-#	Handles stop/start of Linux service even when named ossec-hids-agent(like Wazuh rpm)
-#	Uses a different default secret key which must match the secret in auto_server.py
-#	Validates reply from server instead of assuming a key was received
-#
-# Use this script in conjunction with the forked auto_server.py.  Messaging between the client and server script has been adapted
-# to support queuing of registration requests to avoid a known problem in the original auto-ossec 1.2 package.
-#
 # This will connect to the auto_server.py daemon that will automatically issue a key in
 # order to pair the OSSEC HIDS. 
 #
