@@ -111,9 +111,9 @@ class service(SocketServer.BaseRequestHandler):
 
 		# recommend changing this - if you do, change auto_ossec.py as well - - would recommend this is the default published to git
 		# AES key must be 32 bytes long
-		secret = "ABABABABABABABABABABABABABABABAB"
+		secret = "a3D48gDfgjdfg09853jklh2943123133"
 
-        	print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client connected with ", self.client_address)
+        	print ( "[*] " + time.strftime("%Y-%m-%d %H:%M:%S") + " Client connected from " + str(self.client_address) )
 		try:	
 			data = self.request.recv(1024)
 		 	if data != "":
