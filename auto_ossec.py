@@ -2,6 +2,18 @@
 #
 # auto_ossec.py - BNC fork - version 1.5
 #
+# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_ossec.py.
+#
+# Changes include:
+# 	Overwrites ossec.conf instead of appends to it, and uses newlines
+#	Takes optional second parameter to identify <config-profile> - defaults to 'generic'
+#	Handles stop/start of Linux service even when named ossec-hids-agent(like Wazuh rpm)
+#	Uses a different default secret key which must match the secret in auto_server.py
+#	Validates reply from server instead of assuming a key was received
+#
+# Use this script in conjunction with the forked auto_server.py.  Messaging between the client and server script has been adapted
+# to support queuing of registration requests to avoid a known problem in the original auto-ossec 1.2 package.
+#
 # This will connect to the auto_server.py daemon that will automatically issue a key in
 # order to pair the OSSEC HIDS. 
 #
@@ -144,7 +156,7 @@ def aescall(secret, data, format):
                 return str(aes)
 
 try:
-        # Secret key - change this to something unique for your organization.  Keep the number of characters the same.
+        # Secret key - change this to something unique for your organization.  
 	# Make sure to also change the secret key in auto_server.py on the OSSEC server to the same value.
 	# AES key must be 32 bytes long
 	secret = "a3D48gDfgjdfg09853jklh2943123133"
@@ -217,16 +229,17 @@ try:
         if path == "": sys.exit()
         print ("[*] Removing any old keys.")
         os.chdir(path)
-	
+
+	# import the key with the key presented from the server daemon, deleting old client.keys if present
+	# also make sure a blank active-responses.log exists so it will be detected for monitoring by OSSEC
         if installer == "Windows":
                 if os.path.isfile("client.keys"): os.remove("client.keys")
-                # import the key with the key presented from the server daemon
                 filewrite = file(path + "\\client.keys", "w")
-
+                open(path + "\\active-response\\active-responses.log", 'a').close()
         if installer in "Linux|Mac":
                 if os.path.isfile(path + "/etc/client.keys"): os.remove("etc/client.keys")
                 filewrite = file(path + "/etc/client.keys", "w")
-
+                open("/var/ossec/active-response/active-responses.log", 'a').close()
 
         data = base64.b64decode(data)
         filewrite.write(data)
@@ -259,6 +272,11 @@ try:
         filewrite.write("   </client>\n")
         filewrite.write(" </ossec_config>\n")
         filewrite.close()
+
+
+        
+
+        
 
 	# If any rids files exist from a previous registration, delete them to avoid out of sync rids problems
 	for f in ridslist:
