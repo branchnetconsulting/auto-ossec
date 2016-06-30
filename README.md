@@ -26,5 +26,6 @@ Requirements:
 * python-crypto must be installed
 * Python 2.7 is required.  Dual Python 2.7 ad 3.5 support is planned.
 
-Deployment and Usage:
-* 
+Deployment and usage details can be found in the Wiki:
+* https://github.com/branchnetconsulting/auto-ossec/wiki
+
