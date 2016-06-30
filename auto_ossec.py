@@ -159,7 +159,7 @@ try:
         # Secret key - change this to something unique for your organization.  Keep the number of characters the same.
 	# Make sure to also change the secret key in auto_server.py on the OSSEC server to the same value.
 	# AES key must be 32 bytes long
-	secret = "ABABABABABABABABABABABABABABABAB"
+	secret = "a3D48gDfgjdfg09853jklh2943123133"
 
         # port for daemon
         port = 9654 
