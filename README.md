@@ -6,6 +6,7 @@ Supported Systems: Linux, Windows, Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is a major rework of the original Auto-Enroll for OSSEC 1.3 (Binary Data Systems, David Kennedy)
+
 It is not compatible with the Binary Data Systems Auto-Enroll for OSSEC.
 
 Distinctives of this fork:
