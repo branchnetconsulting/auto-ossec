@@ -32,16 +32,20 @@ try:
 	from Crypto.Cipher import AES
 
 except ImportError:
-	print "[!] python-crypto not installed. Install python-crypto to fix."
+	print ("[!] python-crypto not installed. Install python-crypto to fix.")
 	sys.exit()
 
 # check pexpect library
 try:
 	import pexpect
 except ImportError:
-	print "[!] pexpect not installed. Install pexpect (Redhat/CentOS) or python-pexpect (Debian/Ubuntu) to fix."
+	print ("[!] pexpect not installed. Install pexpect (Redhat/CentOS) or python-pexpect (Debian/Ubuntu) to fix.")
 	sys.exit()
 
+# Check if OSSEC server is installed.   If not, warn user and abort
+if not os.path.isfile("/var/ossec/bin/ossec-monitord"):
+	print ("[!] OSSEC server is not installed on this system.  Install it before using this script.")
+	sys.exit()
 
 class service(SocketServer.BaseRequestHandler):
 
@@ -122,7 +126,7 @@ class service(SocketServer.BaseRequestHandler):
 		# AES key must be 32 bytes long
 		secret = "ABABABABABABABABABABABABABABABAB"
 
-        	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client connected with ", self.client_address
+        	print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client connected with ", self.client_address)
 		try:	
 			data = self.request.recv(1024)
 		 	if data != "":
@@ -145,15 +149,13 @@ class service(SocketServer.BaseRequestHandler):
 						while 1:
 							# find oldest client in queue (first in line)
 							oldest=min(os.listdir('/tmp/auto-ossec-queue'), key = os.path.getctime)
-							# print "This client is:   "+ctoken
-							# print "First in line is: "+oldest
-							# If our client is first in line then proceed to service them
+														# If our client is first in line then proceed to service them
 							if ctoken == oldest:
 								break
 							# Otherwise wait a little bit, sending the "WAIT" message to the client every 5 seconds to ensure them they are in queue
 							timer += 1
 							if timer == 25:
-								print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Sending WAIT message to "+ctoken
+								print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Sending WAIT message to "+ctoken)
 								self.request.send(aescall(secret, "WAIT", "encrypt"))
 								timer = 0
 							time.sleep(.2)
@@ -177,22 +179,22 @@ class service(SocketServer.BaseRequestHandler):
 						# Remove client from queue
 						os.popen("rm -f /tmp/auto-ossec-queue/"+ctoken)
 
-						print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Sending newly provisioned key: " + data.decode('base64')
+						print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Sending newly provisioned key: " + data.decode('base64'))
 						data = aescall(secret, data, "encrypt")
 			                        self.request.send(data)
 
 					else:
-						print  "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client at "+str(self.client_address)+" submitted an invalid message.  Perhaps it used the wrong secret."
+						print  ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client at "+str(self.client_address)+" submitted an invalid message.  Perhaps it used the wrong secret.")
 
 				except Exception, e:
-					print e
+					print (e)
 					pass
 
 		except Exception, e:
-			print e
+			print (e)
 			pass
 
-        	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Terminating connection to client: "+str(self.client_address)
+        	print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Terminating connection to client: "+str(self.client_address))
        		self.request.close()
 
 
@@ -212,7 +214,7 @@ else:
 print ("\n[*] auto_ossec - OSSEC agent mass deployment server-side tool")
 print ("[*] Branch Network Consulting fork, version 1.5")
 
-print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" The auto enrollment OSSEC Server is now listening on 9654" 
+print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" The auto enrollment OSSEC Server is now listening on 9654")
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # set is so that when we cancel out we can reuse port
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -229,7 +231,7 @@ try:
 	t.serve_forever()
 
 except KeyboardInterrupt:
-	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Exiting the automatic enrollment OSSEC daemon"
+	print ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Exiting the automatic enrollment OSSEC daemon")
 	t.shutdown()
 	t.socket.close()
 	sys.exit(0)
