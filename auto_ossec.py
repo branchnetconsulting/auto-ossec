@@ -239,7 +239,7 @@ try:
         if installer in "Linux|Mac":
                 if os.path.isfile(path + "/etc/client.keys"): os.remove("etc/client.keys")
                 filewrite = file(path + "/etc/client.keys", "w")
-                open("/var/ossec/active-response/active-responses.log", 'a').close()
+                open("/var/ossec/logs/active-responses.log", 'a').close()
 
         data = base64.b64decode(data)
         filewrite.write(data)
