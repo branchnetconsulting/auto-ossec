@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# auto_server.py - BNC fork - version 1.4
+# auto_server.py - BNC fork - version 1.5
 #
 # This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_server.py script.  
 # It has been updated to queue incoming registration requests so that parallel calls to /var/ossec/bin/manage_agents are not made.
@@ -21,6 +21,11 @@ from threading import Thread
 import subprocess
 import sys
 import time
+import base64
+import thread
+import time
+import socket
+import os
 
 # check python crypto library
 try:
@@ -30,9 +35,6 @@ except ImportError:
 	print "[!] python-crypto not installed. Install python-crypto to fix."
 	sys.exit()
 
-import base64
-import thread
-
 # check pexpect library
 try:
 	import pexpect
@@ -40,9 +42,6 @@ except ImportError:
 	print "[!] pexpect not installed. Install pexpect (Redhat/CentOS) or python-pexpect (Debian/Ubuntu) to fix."
 	sys.exit()
 
-import time
-import socket
-import os
 
 class service(SocketServer.BaseRequestHandler):
 
@@ -120,7 +119,9 @@ class service(SocketServer.BaseRequestHandler):
         	            return str(aes)
 
 		# recommend changing this - if you do, change auto_ossec.py as well - - would recommend this is the default published to git
+		# AES key must be 32 bytes long
 		secret = "ABABABABABABABABABABABABABABABAB"
+
         	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client connected with ", self.client_address
 		try:	
 			data = self.request.recv(1024)
@@ -129,7 +130,7 @@ class service(SocketServer.BaseRequestHandler):
 					data = aescall(secret, data, "decrypt")
 
 					# if this section clears -we know that it is a legit request, has been decrypted and we're ready to rock
-					if "BNCOSSEC" in data: 
+					if "BNCOSSEC," in data: 
 
 						# Delete any entries in queue more than 1 hour old.  Those would be stale entries.
 						os.popen("find /tmp/auto-ossec-queue/ -type f -cmin +60 -exec rm -f {} \; ;")
@@ -163,12 +164,11 @@ class service(SocketServer.BaseRequestHandler):
 							filewrite.write("lock")
 							filewrite.close()
 
-						# strip identifier
-						data = data.replace("BNCOSSEC", "")
-						hostname = data
+						discard,hostname,ipaddr = data.split(",")
 
 						# pull the true IP, not the NATed one if they are using VMWare
-						ipaddr = self.client_address[0]
+						if ipaddr == "none":
+							ipaddr = self.client_address[0]
 
 						# here if the hostname was already used, we need to remove it and call it again
 						data = parse_client(hostname, ipaddr)
@@ -195,35 +195,41 @@ class service(SocketServer.BaseRequestHandler):
         	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Terminating connection to client: "+str(self.client_address)
        		self.request.close()
 
-# this waits 5 minutes to check if new ossec agents have been deployed, if so it restarts the server
-def ossec_monitor():
-	time.sleep(300)
-	if os.path.isfile("lock"):
-		os.remove("lock")
-		print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" New OSSEC agent added - triggering restart of service to add.."
-		subprocess.Popen("service ossec restart", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).wait()
 
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer): pass
+class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer): 
+	# Ctrl-C will cleanly kill all spawned threads
+	daemon_threads = True
+	# much faster rebinding
+	allow_reuse_address = True
 
 
-# Upon auto-ossec server initialization, clear out the queue since anything there would be stale
-os.popen("rm -f /tmp/auto-ossec-queue/*")
+# Upon auto-ossec server initialization, create queue directory or clear it out if present since anything there would be stale
+if not os.path.exists("/tmp/auto-ossec-queue"):
+	os.makedirs("/tmp/auto-ossec-queue")
+else:
+	os.popen("rm -f /tmp/auto-ossec-queue/*")
 
 print ("\n[*] auto_ossec - OSSEC agent mass deployment server-side tool")
-print ("[*] Branch Network Consulting fork, version 1.4")
+print ("[*] Branch Network Consulting fork, version 1.5")
 
 print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" The auto enrollment OSSEC Server is now listening on 9654" 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # set is so that when we cancel out we can reuse port
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+import struct
+l_onoff = 1                                                                                                                                                           
+l_linger = 0                                                                                                                                                          
+s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', l_onoff, l_linger))
+
 # bind to all interfaces on port 9654
 t = ThreadedTCPServer(('',9654), service)
 # start the server and listen forever
 try:
-	# start a threaded counter
-	thread.start_new_thread(ossec_monitor,())
-
 	t.serve_forever()
 
 except KeyboardInterrupt:
 	print "[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Exiting the automatic enrollment OSSEC daemon"
+	t.shutdown()
+	t.socket.close()
+	sys.exit(0)
