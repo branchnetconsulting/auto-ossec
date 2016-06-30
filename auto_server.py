@@ -2,19 +2,7 @@
 #
 # auto_server.py - BNC fork - version 1.5
 #
-# This is a fork by Kevin Branch (Branch Network Consulting) of BinaryDefense's auto_server.py script.  
-# It has been updated to queue incoming registration requests so that parallel calls to /var/ossec/bin/manage_agents are not made.
-# This resolves a known problem wherein many simultaneous registration requests cause agent ID collisions.
-#
-# Use this script in conjunction with the forked auto_ossec.py script.  Messaging between the client and server script has been adapted
-# to support queuing of registration requests to resolve the agent id collision problem.
-#
-# This is the ossec auto enrollment server daemon. This should be put under supervisor to ensure health and stability.
-#
-#
-# Works with Alienvault and Standlone OSSEC installs
-#
-# Will listen on port 9654 for an incoming challege
+# Use this script on your OSSEC server to accept registration requests from auto_ossec.py/exe on agent systems.
 #
 import SocketServer
 from threading import Thread
@@ -22,7 +10,6 @@ import subprocess
 import sys
 import time
 import base64
-import thread
 import time
 import socket
 import os
@@ -186,11 +173,11 @@ class service(SocketServer.BaseRequestHandler):
 					else:
 						print  ("[*] "+time.strftime("%Y-%m-%d %H:%M:%S")+" Client at "+str(self.client_address)+" submitted an invalid message.  Perhaps it used the wrong secret.")
 
-				except Exception, e:
+				except Exception as e:
 					print (e)
 					pass
 
-		except Exception, e:
+		except Exception as e:
 			print (e)
 			pass
 
