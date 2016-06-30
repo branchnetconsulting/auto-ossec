@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# If a lock file indicating an OSSEC agent has been auto registered is present, then restart OSSEC if there are no other auto-registrations in queue
+
+if [ -f /tmp/aolock -a "`ls -1 /tmp/auto-ossec-queue | wc -l`" == "0" ]; then
+	rm -f /tmp/aolock
+	/var/ossec/bin/ossec-control restart 2> /dev/null > /dev/null
+fi

@@ -1,0 +1,3 @@
+# If a lock file indicating an OSSEC agent has been auto registered is present, then restart OSSEC if there are no other auto-registrations in queue
+* *    * * *   root    /usr/local/bin/monitor-auto-server
+
