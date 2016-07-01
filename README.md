@@ -22,8 +22,10 @@ Distinctives of this fork:
 * More detailed logging and greater system and data validation have been added.
 
 Requirements:
-* auto_server.py has only been tested on Linux systems, though it may work fine on a Mac OS X system running OSSEC server
-* python-crypto must be installed
+* auto_ossec.py is limited to Linux, Windows, and Max OS X systems
+* auto_server.py works on Linux systems, and though untested on Mac OS X, may work fine on that platform as well.  Feedback please.
+* python-crypto must be installed on OSSSEC agent and server systems.
+* pexpect is required by auto_server.py
 * Python 2.7 is required.  
 
 To Do:
